@@ -1,0 +1,8 @@
+#!/bin/execlineb -P
+foreground
+{
+  s6-svwait /var/run/s6/services/sks-db
+}
+loopwhilex foreground {
+    s6-svc -2 /var/run/s6/services/sks-db
+} sleep 3600

@@ -1,0 +1,5 @@
+#!/bin/execlineb -P
+loopwhilex foreground {
+    foreground { db_archive -d -h /var/lib/sks/KDB }
+    db_archive -d -h /var/lib/sks/PTree
+} sleep 604800
