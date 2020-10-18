@@ -49,7 +49,7 @@ RUN set -ex && \
 COPY --from=build /usr/sbin/sks /usr/sbin/
 COPY sks /usr/local/
 COPY s6 /etc/
-COPY entrypoint.sh .
+COPY entrypoint.sh /
 
 WORKDIR /var/lib/sks
 

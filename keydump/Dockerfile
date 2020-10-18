@@ -12,7 +12,7 @@ RUN set -ex \
     && mkdir -p /var/lib/sks/dump \
     && rm -rf /var/lib/apt/lists/*
 
-COPY entrypoint.sh /entrypoint.sh
+COPY entrypoint.sh /
 
 WORKDIR /var/lib/sks
 ENTRYPOINT [ "/entrypoint.sh" ]
