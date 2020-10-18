@@ -1,7 +1,7 @@
 diff -u sks-1.1.6.orig/keydb.ml sks-1.1.6/keydb.ml
 --- sks-1.1.6.orig/keydb.ml	2015-10-31 12:45:21.000000000 -0400
-+++ sks-1.1.6/keydb.ml	2020-10-16 02:18:25.020684600 -0400
-@@ -1166,29 +1166,34 @@
++++ sks-1.1.6/keydb.ml	2020-10-18 17:04:18.877460100 -0400
+@@ -1166,29 +1166,38 @@
      try
        if has_hash hash then [] else
          let keyid = Fingerprint.keyid_from_key ~short:true key in
@@ -32,7 +32,11 @@ diff -u sks-1.1.6.orig/keydb.ml sks-1.1.6/keydb.ml
 +
 +        (* Blacklist poison key - RT#112669 *)
 +        plerror 4 "considering keyid %s" keyid_long;
-+        if keyid_long = "E41ED3A107A7DBC7" then [] else
++        if List.mem keyid_long [
++            "E41ED3A107A7DBC7"; (* 2018-07-16 *)
++            "86CE877469D2EAD9"; (* 2019-01-22 *)
++            "73E287A82CF1B349"; (* 2020-09-18 *)
++          ] then [] else
 +          let potential_merges = List.filter ~f:(fun x -> x <> key)
 +                                   (get_by_short_keyid keyid)
 +          in
