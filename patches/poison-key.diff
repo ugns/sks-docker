@@ -1,0 +1,61 @@
+diff -u sks-1.1.6.orig/keydb.ml sks-1.1.6/keydb.ml
+--- sks-1.1.6.orig/keydb.ml	2015-10-31 12:45:21.000000000 -0400
++++ sks-1.1.6/keydb.ml	2020-10-16 02:18:25.020684600 -0400
+@@ -1166,29 +1166,34 @@
+     try
+       if has_hash hash then [] else
+         let keyid = Fingerprint.keyid_from_key ~short:true key in
+-        let potential_merges = List.filter ~f:(fun x -> x <> key)
+-                                 (get_by_short_keyid keyid)
+-        in
+-        plerror 4 "%d potential merges found for keyid %s"
+-          (List.length potential_merges) (KeyHash.hexify keyid);
+-        let (deletions,mergedkey) =
+-          List.fold_left ~init:([],key) potential_merges
+-            ~f:(fun (updates,key) x ->
+-                  match KeyMerge.merge key x with
+-                    | None -> (updates,key)
+-                    | Some mergedkey ->
+-                        ((x, DeleteKey)::updates,
+-                         mergedkey)
+-               )
+-        in
+-        let addition = (mergedkey,AddKey) in
+-        let updates = addition::deletions in
+-        let updates = List.rev updates in
+-        let updates = List.map updates
+-                        ~f:(fun (key,action) -> (key_to_metadata key,action))
+-        in
+-        plerror 4 "%d updates found before filtering" (List.length updates);
+-        updates
++        let keyid_long = Fingerprint.keyid_to_string ~short:false (Fingerprint.keyid_from_key ~short:false key) in    
++
++        (* Blacklist poison key - RT#112669 *)
++        plerror 4 "considering keyid %s" keyid_long;
++        if keyid_long = "E41ED3A107A7DBC7" then [] else
++          let potential_merges = List.filter ~f:(fun x -> x <> key)
++                                   (get_by_short_keyid keyid)
++          in
++          plerror 4 "%d potential merges found for keyid %s (%s)"
++            (List.length potential_merges) (KeyHash.hexify keyid) keyid_long;
++          let (deletions,mergedkey) =
++            List.fold_left ~init:([],key) potential_merges
++              ~f:(fun (updates,key) x ->
++                    match KeyMerge.merge key x with
++                      | None -> (updates,key)
++                      | Some mergedkey ->
++                          ((x, DeleteKey)::updates,
++                           mergedkey)
++                 )
++          in
++          let addition = (mergedkey,AddKey) in
++          let updates = addition::deletions in
++          let updates = List.rev updates in
++          let updates = List.map updates
++                          ~f:(fun (key,action) -> (key_to_metadata key,action))
++          in
++          plerror 4 "%d updates found before filtering" (List.length updates);
++          updates
+     with
+       | Sys.Break | Eventloop.SigAlarm as e -> raise e
+       | Bdb.DBError s as e ->
