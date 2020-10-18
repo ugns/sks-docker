@@ -44,6 +44,7 @@ RUN set -ex && \
         curl jq && \
     curl -sSL $(curl -s https://api.github.com/repos/just-containers/s6-overlay/releases/latest |jq -r '.assets[] | select(.browser_download_url | endswith("amd64.tar.gz")) | .browser_download_url') | tar xzC / && \
     apk del --purge .sks-setup && \
+    mkdir -p /data && \
     mkdir -p /var/lib/sks
 
 COPY --from=build /usr/sbin/sks /usr/sbin/
