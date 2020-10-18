@@ -56,12 +56,19 @@ fi
 #
 # Handle key dump import if available and no KDB
 #
+fail() { echo Command failed unexpectedly. Bailing out; exit 1; }
+
 if ! test -d /var/lib/sks/KDB; then
   cd /var/lib/sks
   if [ -d dump ] && [ "$(echo dump/*.pgp)" != "dump/*.pgp" ]; then
-    sks build dump/*.pgp -n ${SKS_INIT_BUILD_FILES} -cache ${SKS_INIT_BUILD_CACHE} -stdoutlog || (rm -rf KDB && exit 1)
-    sks cleandb -stdoutlog || exit 1
-    sks pbuild -cache ${SKS_INIT_PBUILD_CACHE} -ptree_cache ${SKS_INIT_PTREE_CACHE} -stdoutlog || (rm -rf PTree && exit 1)
+    ulimit -s unlimited
+    echo "=== Running build... ==="
+    if ! sks build dump/*.pgp -n ${SKS_INIT_BUILD_FILES} -cache ${SKS_INIT_BUILD_CACHE} -stdoutlog; then rm -rf KDB; fail; fi
+    echo "=== Cleaning key database... ==="
+    if ! sks cleandb -stdoutlog; then fail; fi
+    echo "=== Building ptree database... ==="
+    if ! sks pbuild -cache ${SKS_INIT_PBUILD_CACHE} -ptree_cache ${SKS_INIT_PTREE_CACHE} -stdoutlog; then rm -rf PTree; fail; fi
+    echo "=== Done! ==="
   fi
 fi
 
