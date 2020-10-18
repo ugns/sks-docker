@@ -1,10 +1,12 @@
 #!/bin/sh
 
+fail() { echo Command failed unexpectedly. Bailing out; exit 1; }
+
 #
 # Make basic SKS config file
 #
-if ! test -f /var/lib/sks/sksconf; then
-cat > /var/lib/sks/sksconf << EOF
+if ! test -f sksconf; then
+cat > sksconf << EOF
 hostname: ${SKS_HOSTNAME}
 recon_address: ${SKS_RECON_ADDR}
 recon_port: ${SKS_RECON_PORT}
@@ -41,7 +43,7 @@ fi
 #
 # Copy membership file
 #
-if ! test -f /var/lib/sks/membership; then
+if ! test -f membership; then
   cp -a /usr/local/etc/sks/membership .
 fi
 
@@ -49,21 +51,18 @@ fi
 #
 # Copy BDB DB_CONFIG file
 #
-if ! test -f /var/lib/sks/DB_CONFIG; then
+if ! test -f DB_CONFIG; then
   cp -a /usr/local/etc/sks/DB_CONFIG .
 fi
 
 #
 # Handle key dump import if available and no KDB
 #
-fail() { echo Command failed unexpectedly. Bailing out; exit 1; }
-
-if ! test -d /var/lib/sks/KDB; then
-  cd /var/lib/sks
-  if [ -d dump ] && [ "$(echo dump/*.pgp)" != "dump/*.pgp" ]; then
+if ! test -d KDB; then
+  if [ -d /data/dump ] && [ "$(echo /data/dump/*.pgp)" != "/data/dump/*.pgp" ]; then
     ulimit -s unlimited
     echo "=== Running build... ==="
-    if ! sks build dump/*.pgp -n ${SKS_INIT_BUILD_FILES} -cache ${SKS_INIT_BUILD_CACHE} -stdoutlog; then rm -rf KDB; fail; fi
+    if ! sks build /data/dump/*.pgp -n ${SKS_INIT_BUILD_FILES} -cache ${SKS_INIT_BUILD_CACHE} -stdoutlog; then rm -rf KDB; fail; fi
     echo "=== Cleaning key database... ==="
     if ! sks cleandb -stdoutlog; then fail; fi
     echo "=== Building ptree database... ==="
