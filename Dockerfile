@@ -37,6 +37,11 @@ ENV S6_BEHAVIOR_IF_STAGE2_FAILS=2 \
     SKS_INIT_PBUILD_CACHE="20" \
     SKS_INIT_PTREE_CACHE="70"
 
+COPY --from=build /usr/sbin/sks /usr/sbin/
+COPY sks /usr/local/
+COPY s6 /etc/
+COPY entrypoint.sh /
+
 RUN set -ex && \
     apk upgrade --no-cache && \
     apk add --no-cache db-utils && \
@@ -45,12 +50,8 @@ RUN set -ex && \
     curl -sSL $(curl -s https://api.github.com/repos/just-containers/s6-overlay/releases/latest |jq -r '.assets[] | select(.browser_download_url | endswith("amd64.tar.gz")) | .browser_download_url') | tar xzC / && \
     apk del --purge .sks-setup && \
     mkdir -p /data && \
-    mkdir -p /var/lib/sks
-
-COPY --from=build /usr/sbin/sks /usr/sbin/
-COPY sks /usr/local/
-COPY s6 /etc/
-COPY entrypoint.sh /
+    mkdir -p /var/lib/sks && \
+    chmod +x /entrypoint.sh
 
 WORKDIR /var/lib/sks
 
