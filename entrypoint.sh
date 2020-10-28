@@ -55,25 +55,27 @@ if ! test -f DB_CONFIG; then
   cp -a /usr/local/etc/sks/DB_CONFIG .
 fi
 
-#
-# Handle key dump import if available and no KDB
-#
-if ! test -d KDB; then
-  if [ -d /data/dump ] && [ "$(echo /data/dump/*.pgp)" != "/data/dump/*.pgp" ]; then
-    ulimit -s unlimited
-    echo "=== Running build... ==="
-    if ! sks build /data/dump/*.pgp -n ${SKS_INIT_BUILD_FILES} -cache ${SKS_INIT_BUILD_CACHE} -stdoutlog; then rm -rf KDB; fail; fi
-    echo "=== Cleaning key database... ==="
-    if ! sks cleandb -stdoutlog; then fail; fi
+if [ $# -gt 0 ];then
+  # Execute CMD
+  exec "$@"
+else
+  #
+  # Handle key dump import if available and no KDB
+  #
+  if ! test -d KDB; then
+    if [ -d /data/dump ] && [ "$(echo /data/dump/*.pgp)" != "/data/dump/*.pgp" ]; then
+      echo "=== Running build... ==="
+      if ! sks build /data/dump/*.pgp -n ${SKS_INIT_BUILD_FILES} -cache ${SKS_INIT_BUILD_CACHE} -stdoutlog; then rm -rf KDB; fail; fi
+      echo "=== Cleaning key database... ==="
+      if ! sks cleandb -stdoutlog; then fail; fi
+    fi
+  fi
+  if ! test -d PTree; then
     echo "=== Building ptree database... ==="
     if ! sks pbuild -cache ${SKS_INIT_PBUILD_CACHE} -ptree_cache ${SKS_INIT_PTREE_CACHE} -stdoutlog; then rm -rf PTree; fail; fi
     echo "=== Done! ==="
   fi
-fi
 
-# Start daemons
-if [ $# -gt 0 ];then
-  exec "$@"
-else
+  # Start daemons
   exec /init
 fi
