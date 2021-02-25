@@ -1,0 +1,3 @@
+#!/bin/sh
+ulimit -s 65536
+exec sks "$@"

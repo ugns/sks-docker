@@ -1,9 +1,9 @@
 #!/bin/sh
 cd /var/lib/sks || exit 1
 if [ -d dump ] && [ "$(echo dump/*.pgp)" != "dump/*.pgp" ]; then
-    sks build dump/*.pgp -n 10 -cache 100
-    sks cleandb
-    sks pbuild -cache 20 -ptree_cache 70
+    big-sks build dump/*.pgp -n 10 -cache 100
+    big-sks cleandb
+    big-sks pbuild -cache 20 -ptree_cache 70
 fi
 if [ ! -e sksconf ]; then
     cp /usr/local/etc/sks/sksconf .
