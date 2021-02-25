@@ -1,2 +1,2 @@
 #!/bin/execlineb -P
-sks -stdoutlog -basedir /var/lib/sks db
+/usr/local/bin/big-sks -stdoutlog -basedir /var/lib/sks db

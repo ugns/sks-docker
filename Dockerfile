@@ -1,22 +1,27 @@
 FROM alpine:3.7 AS build
 
-COPY patches /tmp/patches/
-
 RUN set -ex && \
     apk upgrade --no-cache && \
     apk add --no-cache \
-        build-base camlp4 db-dev gcc libc-dev zlib-dev curl jq && \
-    curl -sSL $(curl -s https://api.github.com/repos/SKS-Keyserver/sks-keyserver/releases/latest |jq -r '.assets[] | select(.content_type | contains("application/x-compressed-tar")) | .browser_download_url') | tar xzC /tmp && \
-    cd /tmp/sks-* && \
-    patch -p1 </tmp/patches/deprecated-ocaml.diff && \
-    patch -p1 </tmp/patches/fix-build-failure.diff && \
-    patch -p1 </tmp/patches/poison-key.diff && \
-    sed 's/db-.*/db-5.3/' Makefile.local.unused > Makefile.local && \
-    make dep && \
-    make cryptokit-1.7/README.txt && \
-    sed -i 's/uint32/uint32_t/g' cryptokit-1.7/src/stubs-md5.c && \
-    make sks && \
-    install -m755 sks /usr/sbin/sks 
+        build-base camlp4 db-dev gcc libc-dev zlib-dev git opam m4 gmp-dev perl
+WORKDIR /tmp
+RUN git clone https://github.com/SKS-Keyserver/sks-keyserver.git
+COPY patches /tmp/patches/
+WORKDIR /tmp/sks-keyserver
+#RUN patch -p1 </tmp/patches/deprecated-ocaml.diff
+#RUN patch -p1 </tmp/patches/fix-build-failure.diff
+RUN patch -p1 </tmp/patches/poison-key.diff
+RUN sed 's/db-.*/db-5.3/' Makefile.local.unused > Makefile.local
+RUN opam init
+ENV PATH="/root/.opam/system/bin:$PATH" \
+    OCAML_TOPLEVEL_PATH="/root/.opam/system/lib/toplevel" \
+    PERL5LIB="/root/.opam/system/lib/perl5:$PERL5LIB" \
+    CAML_LD_LIBRARY_PATH="/root/.opam/system/lib/stublibs:/usr/lib/ocaml/stublibs"
+RUN opam install ocamlfind
+RUN opam install cryptokit
+RUN make dep
+RUN make all
+RUN install -m755 sks /usr/sbin/sks 
 
 FROM alpine:3
 LABEL maintainer="Jeremy T. Bouse <Jeremy.Bouse@UnderGrid.net>"
@@ -44,7 +49,7 @@ COPY entrypoint.sh /
 
 RUN set -ex && \
     apk upgrade --no-cache && \
-    apk add --no-cache db-utils && \
+    apk add --no-cache db-utils gmp && \
     apk add --no-cache --virtual .sks-setup \
         curl jq && \
     curl -sSL $(curl -s https://api.github.com/repos/just-containers/s6-overlay/releases/latest |jq -r '.assets[] | select(.browser_download_url | endswith("amd64.tar.gz")) | .browser_download_url') | tar xzC / && \

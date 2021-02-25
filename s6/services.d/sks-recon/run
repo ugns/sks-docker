@@ -3,4 +3,4 @@ foreground
 {
   s6-svwait /var/run/s6/services/sks-db
 }
-sks -stdoutlog -basedir /var/lib/sks recon
+/usr/local/bin/big-sks -stdoutlog -basedir /var/lib/sks recon
